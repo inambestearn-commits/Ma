@@ -1,0 +1,713 @@
+/* ---------------------------------------------------------------------------
+   Extra theme layer — loaded after globals.css so it can extend/override.
+   Adds: portal switch, nav tooltips + overflow, tabs, chips, forms, detail
+   layouts, skeletons, extra status colours, and the auth screen.
+--------------------------------------------------------------------------- */
+
+/* --------------------------------- Status --------------------------------- */
+.status i { background: currentColor; }
+.status-invited { color: #6c8ef5; }
+.status-declined { color: #c97258; }
+.status-closed { color: #8b8780; }
+.status-draft { color: #a09d97; }
+.status-open { color: #d29038; }
+.status-in-review { color: #6c8ef5; }
+.status-resolved { color: #3ba66f; }
+.status-auto-action-applied { color: #c0392b; }
+.status-ok { color: #3ba66f; }
+.status-syncing { color: #6c8ef5; }
+.status-api-error { color: #c0392b; }
+.status-not-invited { color: #a09d97; }
+.status-verified { color: #3ba66f; }
+.status-healthy { color: #3ba66f; }
+.status-degraded { color: #d29038; }
+.status-down { color: #c0392b; }
+.status-suspended { color: #d29038; }
+.status-disabled { color: #8b8780; }
+.status-released { color: #3ba66f; }
+.status-failed { color: #c0392b; }
+.status-pending-approval { color: #d29038; }
+.status-waiting-on-partner { color: #6c8ef5; }
+.status-critical { color: #c0392b; }
+.status-warning { color: #d29038; }
+.status-info { color: #6c8ef5; }
+.status-imported { color: #3ba66f; }
+.status-validating { color: #6c8ef5; }
+.status-sent { color: #3ba66f; }
+.status-queued { color: #a09d97; }
+.status-retried { color: #d29038; }
+.status-enabled { color: #3ba66f; }
+.status-not-sent { color: #a09d97; }
+.status-maintenance { color: #d29038; }
+.status-preview { color: #6c8ef5; }
+.status-error { color: #c0392b; }
+/* Publisher submissions. `unread` is a duplicate that was blocked and is waiting
+   on the ops team, so it reads as attention-needed rather than as an error. */
+.status-unread { color: #d29038; }
+.status-submitted { color: #3ba66f; }
+/* Support-ticket lifecycle. IN_PROGRESS and WAITING slug to hyphenated names
+   the base theme never defined, so they need their own colours. */
+.status-in-progress { color: #6c8ef5; }
+.status-waiting { color: #8b5cf6; }
+.status-active i, .status-healthy i, .status-ok i, .status-verified i,
+.status-resolved i, .status-released i, .status-imported i, .status-sent i,
+.status-submitted i { background: currentColor; }
+.status-pending i, .status-suspended i, .status-degraded i, .status-syncing i,
+.status-open i, .status-pending-approval i, .status-validating i, .status-retried i,
+.status-waiting-on-partner i, .status-info i, .status-in-review i,
+.status-in-progress i, .status-waiting i, .status-unread i,
+.status-maintenance i, .status-preview i { background: currentColor; }
+.status-critical i, .status-api-error i, .status-down i, .status-failed i,
+.status-auto-action-applied i, .status-error i { background: currentColor; }
+
+/* --------------------------------- Nav rail -------------------------------- */
+.main-nav {
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+  padding: 14px 10px 20px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.main-nav::-webkit-scrollbar { display: none; }
+.nav-entry { display: flex; justify-content: center; }
+.nav-divider {
+  display: block;
+  width: 26px;
+  height: 1px;
+  margin: 6px auto;
+  background: rgba(255, 255, 255, .18);
+}
+.nav-item {
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  justify-content: center;
+}
+.nav-item::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 7px 11px;
+  border-radius: 9px;
+  background: #17191c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+  z-index: 40;
+  box-shadow: 0 10px 24px rgba(23, 25, 28, .25);
+}
+.nav-item:hover::after,
+.nav-item:focus-visible::after { opacity: 1; }
+
+/* --------------------------------- Topbar --------------------------------- */
+.topbar { gap: 16px; }
+.topbar-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.topbar-profile { display: flex; align-items: center; gap: 9px; }
+.topbar-profile-text { display: flex; flex-direction: column; line-height: 1.2; }
+.topbar-profile-text strong { font-size: 11px; color: #303237; }
+.topbar-profile-text small { font-size: 10px; color: #9b9995; margin-top: 2px; }
+.topbar-icon { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(23,25,28,.09); border-radius: 11px; background: rgba(255,253,249,.7); cursor: pointer; }
+.topbar-icon svg { width: 16px; }
+
+/* Sticky rather than fixed, so the bar stays in the flow of .main-content and
+   nothing below it has to be offset by hand. It is the first child of that
+   column, so pinning it costs no layout shift. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  transition:
+    top .3s cubic-bezier(.4, 0, .2, 1),
+    margin-inline .3s cubic-bezier(.4, 0, .2, 1),
+    border-radius .3s cubic-bezier(.4, 0, .2, 1),
+    background-color .3s ease,
+    border-color .3s ease,
+    box-shadow .3s ease;
+}
+
+/* Once the page moves, the bar lifts off every edge at once: it drops from the
+   viewport top, pulls in from both sides, and its bottom corners round off.
+   The background thins to a blurred veil so the page passing underneath stays
+   readable instead of colliding with the labels.
+   Only top and the sides are inset deliberately — margin-bottom would push the
+   content column down and cause a visible jump the moment scrolling starts,
+   so the gap under the bar is created by the shadow instead. */
+.topbar.is-scrolled {
+  top: 14px;
+  margin-inline: 14px;
+  border-radius: 0 0 22px 22px;
+  border-bottom-color: transparent;
+  background: rgba(242, 240, 235, .58);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    0 18px 34px -14px rgba(23, 25, 28, .28),
+    0 1px 0 rgba(255, 255, 255, .5) inset;
+}
+
+/* The bar is sticky with its own z-index, so the mobile scrim has to clear it
+   or the bar would sit above the dimming layer with the menu open. */
+@media (max-width: 720px) {
+  .mobile-scrim { z-index: 18; }
+  .topbar.is-scrolled { margin-inline: 8px; border-radius: 0 0 18px 18px; }
+}
+
+.portal-switch {
+  display: flex;
+  padding: 3px;
+  border: 1px solid rgba(23, 25, 28, .1);
+  border-radius: 12px;
+  background: rgba(255, 253, 249, .7);
+}
+.portal-switch button {
+  border: 0;
+  border-radius: 9px;
+  padding: 7px 13px;
+  background: transparent;
+  color: #8b8780;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.portal-switch button.on { background: #17191c; color: #fff; box-shadow: 0 5px 12px rgba(23,25,28,.2); }
+
+/* ---------------------------------- Tabs ---------------------------------- */
+.tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 24px; }
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: rgba(255, 253, 249, .8);
+  color: #77736d;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.tab:hover { border-color: #f4b09b; color: var(--orange-dark); }
+.tab.active { background: #17191c; border-color: #17191c; color: #fff; }
+.tab-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: rgba(23, 25, 28, .08);
+  font-size: 10px;
+}
+.tab.active .tab-count { background: rgba(255, 255, 255, .2); }
+
+/* --------------------------------- Chips ---------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.chip-neutral { background: #f2efe9; color: #77736d; }
+.chip-info { background: #ecf1fe; color: #3f63c9; border-color: #d3dffb; }
+.chip-warning { background: #fdf3e3; color: #b3761f; border-color: #f4e2c4; }
+.chip-critical { background: #fdecea; color: #c0392b; border-color: #f6d3ce; }
+.chip-success { background: #e9f7f0; color: #2f8f5f; border-color: #cdeadd; }
+
+/* --------------------------------- Forms ---------------------------------- */
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.form-grid .span-2 { grid-column: 1 / -1; }
+.form-field { display: flex; flex-direction: column; gap: 7px; }
+.field-label { color: #66635f; font-size: 11px; font-weight: 700; }
+.field-hint { color: #a5a19b; font-size: 10px; line-height: 1.5; }
+.input, .textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  outline: none;
+  background: rgba(255, 253, 249, .9);
+  color: #333;
+  font-size: 12px;
+  font-family: inherit;
+}
+.input:focus, .textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); }
+.textarea { min-height: 96px; resize: vertical; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 26px; }
+.form-note {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid #f4e2c4;
+  border-radius: 12px;
+  background: #fdf7ec;
+  color: #8a6a2f;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* --------------------------------- Detail --------------------------------- */
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin-top: 20px; }
+.kv-row { display: grid; grid-template-columns: 170px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid #eee9e4; }
+.kv-row dt { color: #a5a19b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.kv-row dd { margin: 0; color: #4a4845; font-size: 12px; }
+.detail-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-top: 16px; }
+.detail-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; color: #8b8780; font-size: 11px; font-weight: 700; text-decoration: none; }
+.back-link:hover { color: var(--orange-dark); }
+
+/* --------------------------------- Bars ----------------------------------- */
+.bar-list { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+.bar-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; color: #77736d; font-size: 11px; }
+.bar-meta strong { color: #373636; }
+.bar-track { height: 8px; overflow: hidden; border-radius: 99px; background: #f1ece7; }
+.bar-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff9a65, var(--orange)); }
+
+/* ------------------------------- Pagination ------------------------------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  color: #8f8b85;
+  font-size: 11px;
+}
+.pagination.muted { justify-content: flex-start; }
+.pagination-buttons { display: flex; gap: 8px; }
+.pagination-buttons button:disabled { opacity: .45; cursor: not-allowed; }
+.table-empty { margin-top: 20px; padding: 34px; text-align: center; color: #8f8b85; font-size: 12px; border: 1px dashed var(--border); border-radius: 12px; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: rgba(255, 240, 233, .55); }
+.clear-search { border: 0; background: transparent; color: #a5a19b; cursor: pointer; display: grid; place-items: center; }
+.clear-search svg { width: 13px; }
+
+/* ------------------------------- Loading ---------------------------------- */
+.skeleton-stack { display: flex; flex-direction: column; gap: 13px; margin-top: 22px; }
+.skeleton-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 14px; }
+.skeleton {
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #f1ece7 25%, #f9f6f2 50%, #f1ece7 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite linear;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+.error-panel { margin-top: 16px; border-color: #f6d3ce; }
+.error-panel h2 { color: #c0392b; }
+.error-panel p { color: #8f8b85; font-size: 12px; margin: 8px 0 16px; }
+
+/* ------------------------------ Date menu --------------------------------- */
+.date-select-wrap { position: relative; display: inline-block; }
+.date-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 25;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fffdfa;
+  box-shadow: 0 18px 40px rgba(23, 25, 28, .14);
+}
+.date-menu button {
+  display: block;
+  width: 100%;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #575550;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.date-menu button:hover { background: var(--orange-soft); color: var(--orange-dark); }
+
+/* ------------------------------- Timeline --------------------------------- */
+.timeline { display: flex; flex-direction: column; gap: 0; margin-top: 18px; }
+.timeline-item { position: relative; padding: 0 0 20px 24px; border-left: 1px solid #e9e3dc; }
+.timeline-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-soft);
+}
+.timeline-item strong { display: block; color: #45443f; font-size: 12px; }
+.timeline-item span { display: block; margin-top: 4px; color: #a5a19b; font-size: 10px; }
+
+/* ------------------------------ Card metrics ------------------------------ */
+.metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-top: 18px; }
+.metric { padding: 15px 16px; border: 1px solid rgba(23,25,28,.09); border-radius: 14px; background: rgba(255,253,249,.75); }
+.metric span { display: block; color: #8f8a82; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.metric strong { display: block; margin-top: 9px; font-size: 21px; letter-spacing: -.03em; }
+.metric small { display: block; margin-top: 6px; color: #a5a19b; font-size: 10px; }
+
+/* --------------------------------- Auth ----------------------------------- */
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 30px 20px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,139,92,.22), transparent 24rem),
+    radial-gradient(circle at 85% 85%, rgba(255,112,67,.14), transparent 26rem),
+    #15171a;
+}
+.auth-card {
+  width: min(100%, 430px);
+  padding: 34px 32px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 22px;
+  background: rgba(255, 253, 249, .96);
+  box-shadow: 0 30px 80px rgba(0,0,0,.35);
+}
+.auth-brand { display: flex; align-items: baseline; gap: 8px; }
+.auth-brand strong { font-size: 22px; font-weight: 800; letter-spacing: -.06em; color: #17191c; }
+.auth-brand span { font-size: 9px; font-weight: 700; letter-spacing: .24em; color: #9b9995; }
+.auth-card h1 { margin: 22px 0 6px; font-size: 26px; letter-spacing: -.05em; }
+.auth-card .sub { margin: 0 0 22px; color: #8b8780; font-size: 12px; line-height: 1.6; }
+.auth-fields { display: flex; flex-direction: column; gap: 14px; }
+.auth-error {
+  margin-top: 16px;
+  padding: 11px 13px;
+  border: 1px solid #f6d3ce;
+  border-radius: 10px;
+  background: #fdecea;
+  color: #c0392b;
+  font-size: 11px;
+}
+.auth-switch { margin-top: 20px; text-align: center; color: #8b8780; font-size: 11px; }
+.auth-switch button { border: 0; background: transparent; color: var(--orange-dark); font-weight: 700; cursor: pointer; }
+.auth-hint {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: #a5a19b;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* -------------------------------- Trend chart ----------------------------- */
+.trend-chart { display: flex; align-items: flex-end; gap: 10px; height: 190px; margin-top: 26px; }
+.trend-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 9px; height: 100%; min-width: 0; }
+.trend-bar { width: 100%; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg, #ff9a65, var(--orange)); min-height: 5px; transition: background .15s ease; }
+.trend-col:hover .trend-bar { background: linear-gradient(180deg, #2c2e31, #17191c); }
+.trend-col small { color: #b3afa9; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* Bars live in a wrapper so a second, muted series can sit beside the first.
+   Each bar flexes to share the column width: one bar fills it, two split it. */
+.trend-bars { display: flex; align-items: flex-end; justify-content: center; gap: 4px; width: 100%; flex: 1 1 auto; min-height: 0; }
+.trend-bars .trend-bar { width: auto; flex: 1 1 0; min-width: 0; }
+.trend-bar-secondary { background: linear-gradient(180deg, #f3c9b4, #f3b29c); }
+.trend-col:hover .trend-bar-secondary { background: linear-gradient(180deg, #8a8d92, #5f636a); }
+/* Toolbar + per-day figures for the partner home revenue panel. */
+.trend-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.trend-date { display: flex; align-items: center; gap: 8px; color: #a29f99; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.trend-date .input { width: auto; padding: 7px 10px; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.trend-toolbar + .chart-summary { margin-top: 16px; }
+.trend-figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.trend-figures div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.trend-figures span { color: #a29f99; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.trend-figures strong { font-size: 15px; color: #373636; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .trend-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Date-range control on the partner home page. Drives revenue, split, trend
+   and the headline cards; lets a partner pick a span or a single day. */
+.filter-row { flex-wrap: wrap; }
+.range-picker { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-left: auto; }
+.range-field { display: flex; align-items: center; gap: 6px; color: #a29f99; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.range-field .input { width: auto; padding: 7px 10px; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.range-sep { color: #c9c4bd; font-size: 12px; }
+.range-presets { display: flex; gap: 6px; }
+.range-preset { border: 1px solid #e8e2db; background: #fff; color: #6d6a65; border-radius: 8px; padding: 7px 11px; font-size: 11px; font-weight: 700; cursor: pointer; transition: border-color .15s ease, color .15s ease, background .15s ease; }
+.range-preset:hover { border-color: var(--orange); color: var(--orange); }
+.range-preset.is-active { background: var(--orange); border-color: var(--orange); color: #fff; box-shadow: 0 6px 14px rgba(237, 107, 63, .2); }
+@media (max-width: 860px) { .range-picker { margin-left: 0; } }
+.trend-tip { display: none; }
+.trend-col:hover .trend-tip { display: block; position: absolute; transform: translateY(-26px); padding: 5px 8px; border-radius: 7px; background: #17191c; color: #fff; font-size: 10px; font-weight: 700; white-space: nowrap; }
+
+/* ------------------------------- Responsive ------------------------------- */
+@media (max-width: 1180px) {
+  .kv { grid-template-columns: 1fr; }
+  .detail-grid, .detail-grid-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 980px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .topbar-profile-text { display: none; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .portal-switch button { padding: 7px 9px; font-size: 10px; }
+  .breadcrumbs { display: none; }
+  .tabs { gap: 6px; }
+  .tab { padding: 8px 11px; font-size: 10px; }
+  .nav-item::after { display: none; }
+}
+
+/* ------------------------------ Support tickets ----------------------------
+   Conversation thread on the ticket detail page. Partner messages are tinted
+   so a reply from support is obvious at a glance.
+--------------------------------------------------------------------------- */
+.msg-list { display: flex; flex-direction: column; gap: 14px; }
+.msg { border: 1px solid #eee9e4; border-radius: 12px; padding: 14px 16px; background: #fff; }
+.msg-partner { background: #fdf6f1; border-color: #f6e0d3; }
+.msg-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.msg-meta strong { font-size: 12px; color: #373636; }
+.msg-meta span { color: #a5a19b; font-size: 10px; }
+.msg-body { color: #4a4845; font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ticket-reply { margin-top: 20px; padding-top: 18px; border-top: 1px solid #f0ebe5; }
+
+/* The DETAILS card lives in the narrow right column of .detail-grid, where the
+   default 2-up .kv crushes every value against its fixed 170px labels. Stack it
+   the same way the settings page does, at every width. */
+.ticket-details .kv { grid-template-columns: 1fr; }
+.ticket-details .kv-row { grid-template-columns: 1fr; gap: 5px; padding: 13px 0; }
+.ticket-details .kv-row dd { font-size: 13px; overflow-wrap: anywhere; }
+
+/* .panel carries no margin-top of its own — stacked panels are spaced by their
+   wrapper (.settings-block). The reporting QUERY RESULT panel follows the
+   dimension tab bar, so it needs its own gap. */
+.report-result { margin-top: 10px; }
+
+/* ------------------------------- Scrollbar ------------------------------- */
+/* Track is fully clear; the thumb is a translucent pill that floats in a clear
+   gutter (the transparent border is what creates the gap, thanks to
+   background-clip). Firefox takes the standard properties instead. */
+* { scrollbar-width: thin; scrollbar-color: rgba(23, 25, 28, .2) transparent; }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  border: 3.5px solid transparent;
+  border-radius: 999px;
+  background: rgba(23, 25, 28, .16);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(23, 25, 28, .3); background-clip: content-box; }
+::-webkit-scrollbar-thumb:active { background: rgba(23, 25, 28, .42); background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* ------------------------------ Select (native) -------------------------- */
+/* Every dropdown in the app funnels through <select class="input">, so this one
+   block restyles them all. The <option> list itself is OS-rendered and cannot
+   be styled, but its background and colour are honoured on most platforms.
+   appearance:none is what lets the custom chevron show. The extra selectors are
+   needed to outrank the padding shorthands set on .settings-page / .range-field
+   / .trend-date (those are 0,2,0 - a bare select.input is only 0,1,1). */
+select.input,
+.settings-page select.input,
+.range-field select.input,
+.trend-date select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+  font-weight: 600;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(23, 25, 28, .4) 50%),
+    linear-gradient(135deg, rgba(23, 25, 28, .4) 50%, transparent 50%);
+  background-position:
+    right 15px top calc(50% + 1px),
+    right 10px top calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+select.input:hover { border-color: rgba(23, 25, 28, .22); background-color: #fffdfa; }
+select.input:active { background-color: #fff; }
+select.input option { background: #fffdfa; color: #333; font-weight: 500; }
+
+/* ------------------------------ Date menu -------------------------------- */
+/* The one true custom dropdown (DateSelector). It now matches the glass
+   language of the topbar, eases in, and ticks the row that is already active. */
+.date-select-wrap { position: relative; display: inline-block; }
+.date-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 25;
+  min-width: 184px;
+  padding: 6px;
+  border: 1px solid rgba(23, 25, 28, .08);
+  border-radius: 14px;
+  background: rgba(255, 253, 250, .86);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    0 22px 48px -16px rgba(23, 25, 28, .3),
+    0 1px 0 rgba(255, 255, 255, .6) inset;
+  transform-origin: top left;
+  animation: menu-in .16s cubic-bezier(.2, .8, .2, 1);
+}
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-7px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+.date-menu button {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 9px 30px 9px 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #575550;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.date-menu button:hover { background: var(--orange-soft); color: var(--orange-dark); }
+.date-menu button:focus-visible { outline: 2px solid var(--orange); outline-offset: -2px; }
+/* Checkmark, drawn with borders, parked on the right of the active row. */
+.date-menu button::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 5px;
+  height: 9px;
+  margin-top: -6px;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  rotate: 45deg;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.date-menu button[aria-current='true'] {
+  background: var(--orange-soft);
+  color: var(--orange-dark);
+  font-weight: 700;
+}
+.date-menu button[aria-current='true']::after { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .date-menu { animation: none; }
+  select.input, .date-menu button, .date-menu button::after { transition: none; }
+}
+
+/* --------------------------- Publisher onboarding --------------------------- */
+/* The submit flow resolves to one of these instead of navigating away, so the
+   partner keeps the page context and can retry without retyping. */
+.result-card { text-align: center; padding: 52px 32px; }
+.result-card h2 { margin: 18px 0 10px; font-size: 22px; letter-spacing: -.03em; }
+.result-card p { margin: 0 auto; max-width: 52ch; color: #85847f; font-size: 13px; line-height: 1.6; }
+.result-card .form-actions { justify-content: center; margin-top: 28px; }
+.result-icon { width: 34px; height: 34px; color: var(--orange); }
+.result-icon-ok { color: #3ba66f; }
+.result-card-blocked { border-color: #f0c9b8; background: linear-gradient(#fffaf7, var(--cream)); }
+
+/* --------------------------- revenue share slider -------------------------- */
+
+/* Compact: the track, readout and scale share one narrow block instead of
+   stretching across the full span-2 field. */
+.share-slider { padding-top: 4px; max-width: 200px; }
+
+.share-slider-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.share-slider-value {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #23252a;
+  font-variant-numeric: tabular-nums;
+}
+
+.share-slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(23, 25, 28, 0.12);
+  outline: none;
+  cursor: pointer;
+}
+/* Firefox */
+.share-slider-input::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--orange, #e2703a);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(23, 25, 28, 0.28);
+  cursor: grab;
+}
+.share-slider-input::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+/* WebKit */
+.share-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--orange, #e2703a);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(23, 25, 28, 0.28);
+  cursor: grab;
+}
+.share-slider-input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(226, 112, 58, 0.28); }
+.share-slider-input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(226, 112, 58, 0.28); }
+
+.share-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #a8a49e;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .share-slider-input::-webkit-slider-thumb,
+  .share-slider-input::-moz-range-thumb { transition: none; }
+}
+
+/* ------------------- split dashboard: cards left, chart right ------------------- */
+
+.dashboard-grid-split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 15px;
+  margin-top: 15px;
+  align-items: stretch;
+}
+
+.split-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.split-cards .panel { margin-top: 20px; }
+
+@media (max-width: 980px) {
+  .dashboard-grid-split { grid-template-columns: 1fr; }
+}
