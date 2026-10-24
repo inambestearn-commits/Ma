@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AdGlobeX — Partner API Key Manager</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #141720;
+      --border:    #2a2e3f;
+      --accent:    #4f8ef7;
+      --accent-dk: #3a72d4;
+      --success:   #22c55e;
+      --danger:    #ef4444;
+      --danger-dk: #c53030;
+      --warn-bg:   #2a1f00;
+      --warn-bdr:  #f59e0b;
+      --warn-txt:  #fbbf24;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --input-bg:  #111420;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 24px 60px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 540px;
+      padding: 36px 32px;
+    }
+
+    /* ── Logo ── */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+    }
+    .logo-text  { font-size: 17px; font-weight: 600; letter-spacing: -.3px; }
+    .logo-sub   { font-size: 11px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; }
+
+    /* ── Headings ── */
+    h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -.3px; }
+    .subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+
+    /* ── Form ── */
+    label { display: block; font-size: 13px; font-weight: 500; color: #a0aec0; margin-bottom: 6px; }
+    .field { margin-bottom: 18px; }
+    .hint  { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus       { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    /* ── Buttons ── */
+    button { cursor: pointer; border: none; transition: background .2s, opacity .2s; }
+
+    .btn-primary {
+      display: block; width: 100%;
+      padding: 11px 16px;
+      font-size: 14px; font-weight: 600;
+      border-radius: 8px;
+      background: var(--accent); color: #fff;
+    }
+    .btn-primary:hover    { background: var(--accent-dk); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-danger {
+      padding: 6px 12px;
+      font-size: 12px; font-weight: 600;
+      border-radius: 6px;
+      background: rgba(239,68,68,.12);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,.3);
+    }
+    .btn-danger:hover    { background: rgba(239,68,68,.22); }
+    .btn-danger:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      font-size: 12px;
+      border-radius: 7px;
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 13px; font-weight: 600;
+      border-radius: 7px;
+      background: var(--accent); color: #fff;
+    }
+    .btn-sm:hover    { background: var(--accent-dk); }
+    .btn-sm:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Error / Info boxes ── */
+    .error-box {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.35);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 13px;
+      color: #fca5a5;
+      margin-bottom: 18px;
+      display: none;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 22px;
+      font-size: 13px;
+    }
+    .topbar-user  { color: var(--muted); }
+    .topbar-email { font-weight: 600; color: var(--text); margin-left: 5px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 4px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px; font-weight: 500;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      transition: background .15s, color .15s;
+    }
+    .tab-btn.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── Generate result ── */
+    .result-card {
+      background: rgba(34,197,94,.07);
+      border: 1px solid rgba(34,197,94,.3);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 24px;
+    }
+    .result-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--success);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .key-box {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'Menlo','Consolas',monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #86efac;
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .copy-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--border);
+      border: none; border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text);
+      cursor: pointer; width: auto;
+      transition: background .15s;
+    }
+    .copy-btn:hover { background: #3a3f55; }
+    .copy-btn.copied { background: var(--success); color: #fff; }
+
+    .warn-box {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-bdr);
+      border-radius: 7px;
+      padding: 10px 13px;
+      font-size: 12.5px;
+      color: var(--warn-txt);
+      line-height: 1.5;
+    }
+
+    .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .meta-chip {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 11.5px; color: var(--muted);
+    }
+    .meta-chip span { color: var(--text); font-weight: 500; }
+
+    /* ── Keys table ── */
+    .keys-filter {
+      display: flex; gap: 8px; align-items: flex-end;
+      margin-bottom: 20px;
+    }
+    .keys-filter .field { margin-bottom: 0; flex: 1; }
+
+    .keys-empty {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .key-row {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .key-row.revoked { opacity: .45; }
+
+    .key-info { flex: 1; min-width: 0; }
+    .key-id-line {
+      font-family: 'Menlo','Consolas',monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .key-partner {
+      font-size: 14px; font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .key-desc {
+      font-size: 12px; color: var(--muted);
+      margin-bottom: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .key-meta-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-active   { background: rgba(34,197,94,.15); color: #4ade80; }
+    .badge-revoked  { background: rgba(100,116,139,.15); color: var(--muted); }
+
+    .key-date { font-size: 11px; color: var(--muted); }
+
+    .key-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+
+    /* ── Confirm overlay ── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .dialog {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 28px 24px;
+      max-width: 380px; width: 90%;
+    }
+    .dialog h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .dialog p  { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+    .dialog-btns { display: flex; gap: 10px; justify-content: flex-end; }
+    .dialog-btns .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 16px;
+      font-size: 13px; font-weight: 500;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    .dialog-btns .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+    .dialog-btns .btn-revoke {
+      background: var(--danger);
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 13px; font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer; border: none;
+    }
+    .dialog-btns .btn-revoke:hover    { background: var(--danger-dk); }
+    .dialog-btns .btn-revoke:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Misc ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .keys-loading { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Confirm Dialog ─────────────────────────────────────── -->
+<div class="overlay" id="confirm-overlay">
+  <div class="dialog">
+    <h3>Revoke API Key?</h3>
+    <p id="confirm-msg">This key will be immediately rejected on all future requests. The record is kept for auditing.</p>
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-revoke" id="confirm-revoke-btn" onclick="confirmRevoke()">Revoke Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main Card ─────────────────────────────────────────── -->
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">A</div>
+    <div>
+      <div class="logo-text">AdGlobeX</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: Login ──────────────────────────────────────── -->
+  <div id="page-login" class="page active">
+    <h2>Sign in</h2>
+    <p class="subtitle">Admin access required to manage partner API keys.</p>
+
+    <div id="login-error" class="error-box"></div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="admin@adglobex.com" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button id="login-btn" class="btn-primary" onclick="doLogin()">Sign in</button>
+  </div>
+
+  <!-- ── PAGE: Dashboard ──────────────────────────────────── -->
+  <div id="page-dashboard" class="page">
+
+    <div class="topbar">
+      <div>
+        <span class="topbar-user">Signed in as</span>
+        <span id="user-email" class="topbar-email"></span>
+      </div>
+      <button class="btn-ghost" onclick="doLogout()">Sign out</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-generate-btn" onclick="switchTab('generate')">Generate Key</button>
+      <button class="tab-btn" id="tab-manage-btn" onclick="switchTab('manage')">Manage Keys</button>
+    </div>
+
+    <!-- ── Tab: Generate ── -->
+    <div class="tab-panel active" id="tab-generate">
+      <h2>Generate API Key</h2>
+      <p class="subtitle">Creates a partner API key stored as SHA-256. The raw key is shown once — save it immediately.</p>
+
+      <hr class="divider" />
+
+      <div id="keygen-error" class="error-box"></div>
+
+      <div class="field">
+        <label for="partner-tag">Partner Tag <span style="color:var(--danger)">*</span></label>
+        <input id="partner-tag" type="text" placeholder="e.g. acme_media" />
+        <div class="hint">Lowercase slug — alphanumeric + underscore only.</div>
+      </div>
+      <div class="field">
+        <label for="description">Description</label>
+        <input id="description" type="text" placeholder="e.g. Acme Media integration key" />
+      </div>
+      <div class="field">
+        <label for="expires-days">Expires In (days)</label>
+        <input id="expires-days" type="number" value="3650" min="1" max="36500" />
+        <div class="hint">Default 3650 days (~10 years). Leave blank for no expiry.</div>
+      </div>
+
+      <button id="generate-btn" class="btn-primary" onclick="doGenerate()">Generate API Key</button>
+
+      <div id="result-section" style="display:none"></div>
+    </div>
+
+    <!-- ── Tab: Manage ── -->
+    <div class="tab-panel" id="tab-manage">
+      <h2>Manage Keys</h2>
+      <p class="subtitle">View and revoke active partner API keys. Revoked keys are retained for auditing.</p>
+
+      <hr class="divider" />
+
+      <div id="manage-error" class="error-box"></div>
+
+      <div class="keys-filter">
+        <div class="field">
+          <label for="filter-tag">Filter by Partner Tag</label>
+          <input id="filter-tag" type="text" placeholder="Leave blank for all keys"
+                 onkeydown="if(event.key==='Enter') loadKeys()" />
+        </div>
+        <button class="btn-sm" onclick="loadKeys()" id="load-btn">Load Keys</button>
+      </div>
+
+      <div id="keys-container">
+        <div class="keys-empty">Enter a partner tag or click "Load Keys" to list all keys.</div>
+      </div>
+    </div>
+
+  </div><!-- /page-dashboard -->
+</div><!-- /card -->
+
+<script>
+  // ── Config ──────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://zkylucbgsclmykjygsqk.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpreWx1Y2Jnc2NsbXlranlnc3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MTExNDksImV4cCI6MjEwNzE4NzE0OX0.6mH8SkpH5GRBGOUqBZ4URtP-QpjF3OyN9Qp3p8QrJNs';
+  const BACKEND_URL   = 'https://adglobex.onrender.com';
+
+  // ── Session ─────────────────────────────────────────────
+  let _token = sessionStorage.getItem('agx_token');
+  let _email = sessionStorage.getItem('agx_email');
+
+  function saveSession(token, email) {
+    _token = token; _email = email;
+    sessionStorage.setItem('agx_token', token);
+    sessionStorage.setItem('agx_email', email);
+  }
+  function clearSession() {
+    _token = null; _email = null;
+    sessionStorage.removeItem('agx_token');
+    sessionStorage.removeItem('agx_email');
+  }
+
+  // ── Pages ────────────────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name + '-btn').classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'manage') loadKeys();
+  }
+
+  // ── Init ────────────────────────────────────────────────
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  if (_token && _email) {
+    document.getElementById('user-email').textContent = _email;
+    showPage('dashboard');
+  }
+
+  // ── Login ────────────────────────────────────────────────
+  async function doLogin() {
+    const btn   = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+    const email = document.getElementById('email').value.trim();
+    const pass  = document.getElementById('password').value;
+
+    errEl.style.display = 'none';
+    if (!email || !pass) { showError(errEl, 'Please enter your email and password.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Signing in…';
+
+    try {
+      const res  = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(errEl, data?.error_description || data?.msg || data?.error || 'Invalid credentials.');
+        return;
+      }
+
+      saveSession(data.access_token, data.user?.email || email);
+      document.getElementById('user-email').textContent = _email;
+      document.getElementById('keygen-error').style.display = 'none';
+      document.getElementById('manage-error').style.display = 'none';
+      document.getElementById('result-section').style.display = 'none';
+      showPage('dashboard');
+
+    } catch {
+      showError(errEl, 'Network error — check your connection.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  }
+
+  // ── Logout ───────────────────────────────────────────────
+  function doLogout() {
+    clearSession();
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('keys-container').innerHTML =
+      '<div class="keys-empty">Enter a partner tag or click "Load Keys" to list all keys.</div>';
+    showPage('login');
+  }
+
+  // ── Generate ─────────────────────────────────────────────
+  async function doGenerate() {
+    const btn        = document.getElementById('generate-btn');
+    const errEl      = document.getElementById('keygen-error');
+    const resultEl   = document.getElementById('result-section');
+    const partnerTag = document.getElementById('partner-tag').value.trim();
+    const desc       = document.getElementById('description').value.trim();
+    const expiresRaw = document.getElementById('expires-days').value.trim();
+
+    errEl.style.display = 'none';
+    resultEl.style.display = 'none';
+
+    if (!partnerTag) { showError(errEl, 'Partner Tag is required.'); return; }
+    if (!/^[a-z0-9_]+$/.test(partnerTag)) {
+      showError(errEl, 'Partner Tag must be lowercase letters, numbers, and underscores only.');
+      return;
+    }
+
+    const body = { partner_tag: partnerTag };
+    if (desc) body.description = desc;
+    if (expiresRaw !== '') {
+      const days = parseInt(expiresRaw, 10);
+      if (isNaN(days) || days < 1) { showError(errEl, 'Expires In must be a positive number.'); return; }
+      body.expires_days = days;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Generating…';
+
+    try {
+      const res = await apiFetch('POST', '/api/v1/partner-portal/api-keys/generate/', body);
+      if (res.status === 401) { handleExpired(); return; }
+      if (res.status === 403) { showError(errEl, 'Access denied — admin role required.'); return; }
+
+      const data = await res.json();
+      if (!res.ok) { showError(errEl, extractError(data)); return; }
+
+      renderResult(resultEl, data);
+    } catch {
+      showError(errEl, 'Network error — ensure the backend is running at ' + BACKEND_URL);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate API Key';
+    }
+  }
+
+  function renderResult(el, data) {
+    const expiresLabel = data.expires_at ? new Date(data.expires_at).toLocaleString() : 'Never';
+    el.innerHTML = `
+      <div class="result-card">
+        <div class="result-title">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm3.707 6.293l-4 4a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L9 10.172l3.293-3.293a1 1 0 011.414 1.414z" fill="currentColor"/>
+          </svg>
+          API Key Generated Successfully
+        </div>
+        <div class="warn-box" style="margin-bottom:12px">
+          ⚠️ This is the only time this key will be shown. Copy it now and store it securely.
+        </div>
+        <label style="margin-bottom:6px;display:block;font-size:12px;font-weight:600;color:#a0aec0">RAW API KEY</label>
+        <div class="key-box" id="key-display">
+          ${esc(data.api_key)}
+          <button class="copy-btn" onclick="copyText(this, '${escAttr(data.api_key)}')">Copy</button>
+        </div>
+        <div class="meta-row">
+          <div class="meta-chip">ID: <span>${esc(data.key_id)}</span></div>
+          <div class="meta-chip">Partner: <span>${esc(data.partner_tag)}</span></div>
+          <div class="meta-chip">Expires: <span>${esc(expiresLabel)}</span></div>
+          ${data.description ? `<div class="meta-chip">Desc: <span>${esc(data.description)}</span></div>` : ''}
+        </div>
+      </div>`;
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── Load Keys ────────────────────────────────────────────
+  async function loadKeys() {
+    const errEl     = document.getElementById('manage-error');
+    const container = document.getElementById('keys-container');
+    const loadBtn   = document.getElementById('load-btn');
+    const tag       = document.getElementById('filter-tag').value.trim();
+
+    errEl.style.display = 'none';
+    container.innerHTML = '<div class="keys-loading"><span class="spinner" style="border-top-color:var(--accent)"></span> Loading…</div>';
+    loadBtn.disabled = true;
+
+    const url = tag
+      ? `/api/v1/partner-portal/api-keys/?partner_tag=${encodeURIComponent(tag)}`
+      : '/api/v1/partner-portal/api-keys/';
+
+    try {
+      const res = await apiFetch('GET', url);
+      if (res.status === 401) { handleExpired(); return; }
+      if (res.status === 403) { showError(errEl, 'Access denied — admin role required.'); container.innerHTML = ''; return; }
+
+      const data = await res.json();
+      if (!res.ok) { showError(errEl, extractError(data)); container.innerHTML = ''; return; }
+
+      renderKeys(container, (data.keys || []).filter(k => k.is_active));
+    } catch {
+      showError(errEl, 'Network error — ensure the backend is running at ' + BACKEND_URL);
+      container.innerHTML = '';
+    } finally {
+      loadBtn.disabled = false;
+    }
+  }
+
+  function renderKeys(container, keys) {
+    if (!keys.length) {
+      container.innerHTML = '<div class="keys-empty">No API keys found.</div>';
+      return;
+    }
+
+    container.innerHTML = keys.map(k => {
+      const isActive  = k.is_active;
+      const created   = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
+      const expires   = k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Never';
+      const shortId   = k.key_id.slice(0, 8) + '…' + k.key_id.slice(-4);
+
+      return `
+        <div class="key-row ${isActive ? '' : 'revoked'}" id="row-${esc(k.key_id)}">
+          <div class="key-info">
+            <div class="key-id-line">${esc(k.key_id)}</div>
+            <div class="key-partner">${esc(k.partner_tag)}</div>
+            ${k.description ? `<div class="key-desc">${esc(k.description)}</div>` : ''}
+            <div class="key-meta-row">
+              <span class="badge ${isActive ? 'badge-active' : 'badge-revoked'}">${isActive ? 'Active' : 'Revoked'}</span>
+              <span class="key-date">Created ${esc(created)}</span>
+              <span class="key-date">· Expires ${esc(expires)}</span>
+              ${k.created_by ? `<span class="key-date">· By ${esc(k.created_by)}</span>` : ''}
+            </div>
+          </div>
+          <div class="key-actions">
+            ${isActive
+              ? `<button class="btn-danger" onclick="askRevoke('${escAttr(k.key_id)}','${escAttr(k.partner_tag)}')">Revoke</button>`
+              : `<span style="font-size:11px;color:var(--muted)">Revoked</span>`
+            }
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Revoke flow ──────────────────────────────────────────
+  let _pendingKeyId = null;
+
+  function askRevoke(keyId, partnerTag) {
+    _pendingKeyId = keyId;
+    document.getElementById('confirm-msg').textContent =
+      `Revoke the API key for partner "${partnerTag}"? This cannot be undone — the key will stop working immediately.`;
+    document.getElementById('confirm-overlay').classList.add('open');
+  }
+
+  function closeConfirm() {
+    _pendingKeyId = null;
+    document.getElementById('confirm-overlay').classList.remove('open');
+    document.getElementById('confirm-revoke-btn').disabled = false;
+    document.getElementById('confirm-revoke-btn').textContent = 'Revoke Key';
+  }
+
+  async function confirmRevoke() {
+    if (!_pendingKeyId) return;
+    const btn   = document.getElementById('confirm-revoke-btn');
+    const errEl = document.getElementById('manage-error');
+    const keyId = _pendingKeyId;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Revoking…';
+
+    try {
+      const res = await apiFetch('DELETE', `/api/v1/partner-portal/api-keys/${encodeURIComponent(keyId)}/revoke/`);
+      if (res.status === 401) { closeConfirm(); handleExpired(); return; }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        closeConfirm();
+        showError(errEl, extractError(data));
+        return;
+      }
+
+      closeConfirm();
+      // Mark row as revoked in place without a full reload
+      const row = document.getElementById('row-' + keyId);
+      if (row) {
+        row.classList.add('revoked');
+        const badge   = row.querySelector('.badge');
+        const actions = row.querySelector('.key-actions');
+        if (badge)   { badge.className = 'badge badge-revoked'; badge.textContent = 'Revoked'; }
+        if (actions) { actions.innerHTML = '<span style="font-size:11px;color:var(--muted)">Revoked</span>'; }
+      }
+    } catch {
+      closeConfirm();
+      showError(errEl, 'Network error — ensure the backend is running at ' + BACKEND_URL);
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────
+  function apiFetch(method, path, body) {
+    const opts = {
+      method,
+      headers: {
+        'Authorization': `Bearer ${_token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(BACKEND_URL + path, opts);
+  }
+
+  function handleExpired() {
+    clearSession();
+    showPage('login');
+    document.getElementById('login-error').textContent = 'Session expired — please sign in again.';
+    document.getElementById('login-error').style.display = 'block';
+  }
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function extractError(data) {
+    if (typeof data === 'string') return data;
+    if (data.detail) return data.detail;
+    if (data.error)  return data.error;
+    const k = Object.keys(data)[0];
+    if (k) { const v = data[k]; return `${k}: ${Array.isArray(v) ? v[0] : v}`; }
+    return 'An unexpected error occurred.';
+  }
+
+  function copyText(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function esc(str) {
+    return String(str ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(str) { return String(str ?? '').replace(/'/g, "\\'"); }
+</script>
+</body>
+</html>

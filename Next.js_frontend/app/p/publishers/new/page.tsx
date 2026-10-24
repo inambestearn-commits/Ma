@@ -21,7 +21,7 @@ export default function NewPublisherPage() {
   const [site, setSite] = useState('')
   const [gamEmail, setGamEmail] = useState('')
   const [networkCode, setNetworkCode] = useState('')
-  const [childShare, setChildShare] = useState(DEFAULT_CHILD_SHARE)
+  const [childShare, setChildShare] = useState<number | ''>(DEFAULT_CHILD_SHARE)
   const [maxShare, setMaxShare] = useState(100)
   const [delegationType, setDelegationType] = useState('MANAGE_ACCOUNT')
 
@@ -30,7 +30,7 @@ export default function NewPublisherPage() {
 
   /**
    * The ceiling comes from `partners.max_revenue_share`, set by the admin when
-   * this partner was created. Until it lands the slider is unbounded, then
+   * this partner was created. Until it lands the share is unbounded, then
    * clamps — and the current value is pulled back inside the new range so the
    * form never holds a share the server would reject.
    */
@@ -44,7 +44,7 @@ export default function NewPublisherPage() {
           ? Math.min(100, Math.round(data.maxRevenueShare))
           : 100
         setMaxShare(cap)
-        setChildShare((prev) => Math.min(prev, cap))
+        setChildShare((prev) => (typeof prev === 'number' ? Math.min(prev, cap) : cap))
       })
       .catch(() => {})
     return () => {
@@ -59,7 +59,8 @@ export default function NewPublisherPage() {
     return withoutScheme.split('/')[0].split('?')[0].split('#')[0].replace(/^www\./i, '').replace(/\.$/, '').toLowerCase()
   }, [site])
 
-  const fieldsFilled = Boolean(host && gamEmail && networkCode.replace(/\D/g, '') && delegationType)
+  const shareValid = typeof childShare === 'number' && !Number.isNaN(childShare) && childShare >= 1 && childShare <= maxShare
+  const fieldsFilled = Boolean(host && gamEmail && networkCode.replace(/\D/g, '') && delegationType && shareValid)
 
   function resetForm() {
     setSite('')
@@ -85,7 +86,7 @@ export default function NewPublisherPage() {
           site,
           gamEmail,
           networkCode,
-          childShare,
+          childShare: typeof childShare === 'number' ? childShare : Number(childShare),
           delegationType,
         }),
       })
@@ -220,32 +221,42 @@ export default function NewPublisherPage() {
               />
             </Field>
 
-            <div className="span-2">
-              <Field
-                label="Revenue share"
-                hint={`Drag to set the child's share. Your account is capped at ${maxShare}%.`}
-              >
-                <div className="share-slider">
-                  <div className="share-slider-readout">
-                    <span className="share-slider-value">{childShare}%</span>
-                  </div>
-                  <input
-                    className="share-slider-input"
-                    type="range"
-                    min={1}
-                    max={maxShare}
-                    step={1}
-                    value={childShare}
-                    onChange={(e) => setChildShare(Number(e.target.value))}
-                    aria-label="Child revenue share percentage"
-                  />
-                  <div className="share-slider-scale">
-                    <span>1%</span>
-                    <span>{maxShare}%</span>
-                  </div>
-                </div>
-              </Field>
-            </div>
+            <Field
+              label="Revenue share"
+              hint={`Enter the child's share. Your account is capped at ${maxShare}%.`}
+            >
+              <input
+                className="input"
+                type="number"
+                min={1}
+                max={maxShare}
+                step={1}
+                value={childShare}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === '') {
+                    setChildShare('')
+                    return
+                  }
+                  const num = Number(val)
+                  if (Number.isNaN(num)) return
+                  if (num > maxShare) {
+                    setChildShare(maxShare)
+                  } else {
+                    setChildShare(num)
+                  }
+                }}
+                onBlur={() => {
+                  if (childShare === '' || Number(childShare) < 1) {
+                    setChildShare(1)
+                  } else if (Number(childShare) > maxShare) {
+                    setChildShare(maxShare)
+                  }
+                }}
+                placeholder="10"
+                required
+              />
+            </Field>
 
             <Field label="Delegation type">
               <Select value={delegationType} onChange={setDelegationType} options={DELEGATION_OPTIONS} />
