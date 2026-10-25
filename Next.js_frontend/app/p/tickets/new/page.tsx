@@ -27,7 +27,7 @@ export default function NewTicketPage() {
       const { ticketId } = await create.mutateAsync({ subject, description, category, priority })
       router.push(`/p/tickets/${encodeURIComponent(ticketId)}`)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not file the ticket'
+      const message = err instanceof Error ? err.message : 'Could not submit your ticket. Please try again.'
       setFieldErrors({ _form: message })
     }
   }
@@ -39,7 +39,7 @@ export default function NewTicketPage() {
       <PageHeader
         eyebrow="SUPPORT"
         title="New ticket"
-        subtitle="Tell us what you need help with. Your partner tag is attached automatically, so support can pull up the right sites without you repeating them."
+        subtitle="Need help or have questions? Submit a support request and our team will get back to you promptly."
         actions={
           <Link className="secondary-button" href="/p/tickets">
             <ArrowLeft /> Back to tickets
@@ -48,7 +48,7 @@ export default function NewTicketPage() {
       />
 
       <div className="detail-grid">
-        <Panel kicker="TICKET" title="What do you need help with?">
+        <Panel kicker="SUPPORT REQUEST" title="Ticket details">
           <form onSubmit={submit}>
             {fieldErrors._form ? (
               <p className="auth-error" role="alert" style={{ marginBottom: 14 }}>
@@ -56,14 +56,14 @@ export default function NewTicketPage() {
               </p>
             ) : null}
 
-            <Field label="Subject" hint="A short summary, e.g. “Revenue missing for 8 Oct”.">
+            <Field label="Subject" hint="A clear, concise summary of what you need assistance with.">
               <input
                 className="input"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 maxLength={200}
                 required
-                placeholder="Revenue missing for 8 Oct"
+                placeholder="e.g. Question about monthly earnings or setup"
               />
             </Field>
 
@@ -75,7 +75,7 @@ export default function NewTicketPage() {
                   options={TICKET_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
                 />
               </Field>
-              <Field label="Priority" hint="Urgent is for revenue-affecting outages.">
+              <Field label="Priority" hint="Select Urgent only for critical, time-sensitive issues.">
                 <Select
                   value={priority}
                   onChange={setPriority}
@@ -86,7 +86,7 @@ export default function NewTicketPage() {
 
             <Field
               label="Description"
-              hint="Include network codes, dates and figures where you can — it usually saves a round trip."
+              hint="Please provide details, relevant URLs, dates, or error messages to help us resolve this quickly."
             >
               <textarea
                 className="input textarea"
@@ -95,7 +95,7 @@ export default function NewTicketPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={8000}
                 required
-                placeholder={'What happened, which sites are affected, and what you expected instead.'}
+                placeholder="Describe your issue or question in detail..."
               />
             </Field>
 
@@ -111,22 +111,22 @@ export default function NewTicketPage() {
                     : undefined
                 }
               >
-                <Send /> {create.isPending ? 'Filing…' : 'File ticket'}
+                <Send /> {create.isPending ? 'Submitting…' : 'Submit ticket'}
               </button>
             </div>
           </form>
         </Panel>
 
-        <Panel kicker="GOOD TO KNOW" title="What happens next">
+        <Panel kicker="HELP & TIPS" title="What to expect">
           <ul style={{ margin: 0, paddingLeft: 18, color: '#5d5b57', fontSize: 12, lineHeight: 1.8 }}>
-            <li>Your partner tag is written to the ticket from your session — you never select it.</li>
-            <li>You can reply on the ticket thread and the whole conversation stays in one place.</li>
-            <li>Replying to a resolved ticket reopens it automatically.</li>
-            <li>Closed tickets cannot be replied to; file a new one to start fresh.</li>
+            <li>Your account details are automatically linked, so our support team has immediate context.</li>
+            <li>You can reply directly within the ticket thread to keep all communication in one place.</li>
+            <li>If an issue resurfaces after being marked resolved, replying will reopen it automatically.</li>
+            <li>Closed tickets cannot receive new replies; please create a new ticket for new requests.</li>
           </ul>
           {dirty ? (
             <p className="form-note" style={{ marginTop: 16 }}>
-              You have unsaved text. Leaving this page discards it.
+              You have unsaved changes. Leaving this page will discard them.
             </p>
           ) : null}
         </Panel>
