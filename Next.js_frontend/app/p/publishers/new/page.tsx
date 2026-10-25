@@ -22,15 +22,15 @@ export default function NewPublisherPage() {
   const [gamEmail, setGamEmail] = useState('')
   const [networkCode, setNetworkCode] = useState('')
   const [parentShare, setParentShare] = useState<number | ''>(DEFAULT_PARENT_SHARE)
-  const [maxShare, setMaxShare] = useState(100)
+  const [minShare, setMinShare] = useState(1)
   const [delegationType, setDelegationType] = useState('MANAGE_ACCOUNT')
 
   const [phase, setPhase] = useState<Phase>('form')
   const [error, setError] = useState('')
 
   /**
-   * The ceiling comes from `partners.max_revenue_share`, set by the admin when
-   * this partner was created.
+   * The commercial floor comes from `partners.max_revenue_share`, set by the admin when
+   * this partner was created. The partner cannot offer less than their account floor.
    */
   useEffect(() => {
     let cancelled = false
@@ -38,11 +38,12 @@ export default function NewPublisherPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return
-        const cap = typeof data.maxRevenueShare === 'number' && data.maxRevenueShare > 0
-          ? Math.min(100, Math.round(data.maxRevenueShare))
-          : 100
-        setMaxShare(cap)
-        setParentShare((prev) => (typeof prev === 'number' ? Math.min(prev, cap) : cap))
+        const raw = data.maxRevenueShare
+        if (typeof raw === 'number' && raw > 0) {
+          const min = raw > 50 ? Math.max(1, 100 - Math.round(raw)) : Math.round(raw)
+          setMinShare(min)
+          setParentShare((prev) => (typeof prev === 'number' ? Math.max(prev, min) : min))
+        }
       })
       .catch(() => {})
     return () => {
@@ -57,14 +58,14 @@ export default function NewPublisherPage() {
     return withoutScheme.split('/')[0].split('?')[0].split('#')[0].replace(/^www\./i, '').replace(/\.$/, '').toLowerCase()
   }, [site])
 
-  const shareValid = typeof parentShare === 'number' && !Number.isNaN(parentShare) && parentShare >= 1 && parentShare <= maxShare
+  const shareValid = typeof parentShare === 'number' && !Number.isNaN(parentShare) && parentShare >= minShare && parentShare <= 99
   const fieldsFilled = Boolean(host && gamEmail && networkCode.replace(/\D/g, '') && delegationType && shareValid)
 
   function resetForm() {
     setSite('')
     setGamEmail('')
     setNetworkCode('')
-    setParentShare(Math.min(DEFAULT_PARENT_SHARE, maxShare))
+    setParentShare(Math.max(DEFAULT_PARENT_SHARE, minShare))
     setDelegationType('MANAGE_ACCOUNT')
     setError('')
     setPhase('form')
@@ -224,13 +225,13 @@ export default function NewPublisherPage() {
 
             <Field
               label="Revenue share"
-              hint={`Parent share. Your account is capped at ${maxShare}%.`}
+              hint={`Parent share. Your account requires at least ${minShare}%.`}
             >
               <input
                 className="input"
                 type="number"
-                min={1}
-                max={maxShare}
+                min={minShare}
+                max={99}
                 step={1}
                 value={parentShare}
                 onChange={(e) => {
@@ -241,20 +242,20 @@ export default function NewPublisherPage() {
                   }
                   const num = Number(val)
                   if (Number.isNaN(num)) return
-                  if (num > maxShare) {
-                    setParentShare(maxShare)
+                  if (num > 99) {
+                    setParentShare(99)
                   } else {
                     setParentShare(num)
                   }
                 }}
                 onBlur={() => {
-                  if (parentShare === '' || Number(parentShare) < 1) {
-                    setParentShare(1)
-                  } else if (Number(parentShare) > maxShare) {
-                    setParentShare(maxShare)
+                  if (parentShare === '' || Number(parentShare) < minShare) {
+                    setParentShare(minShare)
+                  } else if (Number(parentShare) > 99) {
+                    setParentShare(99)
                   }
                 }}
-                placeholder={String(Math.min(DEFAULT_PARENT_SHARE, maxShare))}
+                placeholder={String(Math.max(DEFAULT_PARENT_SHARE, minShare))}
                 required
               />
             </Field>

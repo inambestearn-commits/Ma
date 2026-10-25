@@ -92,11 +92,12 @@ export async function POST(request: NextRequest) {
   if (millipercent === null) return fail('Revenue share must be a whole percent between 1 and 100', 400)
 
   /**
-   * The ceiling the admin set when this partner was created. Enforced here as
-   * well as in the form, so a stale tab or a hand-rolled request cannot exceed
+   * The commercial bound set when this partner was created. Enforced here as
+   * well as in the form, so a stale tab or a hand-rolled request cannot breach
    * what the partner was actually granted. No cap recorded means no limit.
    *
-   * If cap <= 50, it represents the partner's (parent's) max cut (e.g. 5%).
+   * If cap <= 50, it represents the partner's (parent's) minimum cut (e.g. 5%),
+   * meaning the partner must charge at least that percentage.
    * If cap > 50, it represents the child publisher's max share (e.g. 95%).
    */
   const rawCap = partnerRecord.max_revenue_share
@@ -106,8 +107,8 @@ export async function POST(request: NextRequest) {
       : 100
   const parentShare = 100 - childShare
   if (cap <= 50) {
-    if (parentShare > cap) {
-      return fail(`Revenue share cannot exceed ${cap}% for this account. Contact the admin.`, 403)
+    if (parentShare < cap) {
+      return fail(`Revenue share cannot be less than ${cap}% for this account. Contact the admin.`, 403)
     }
   } else {
     if (childShare > cap) {
