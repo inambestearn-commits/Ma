@@ -95,14 +95,24 @@ export async function POST(request: NextRequest) {
    * The ceiling the admin set when this partner was created. Enforced here as
    * well as in the form, so a stale tab or a hand-rolled request cannot exceed
    * what the partner was actually granted. No cap recorded means no limit.
+   *
+   * If cap <= 50, it represents the partner's (parent's) max cut (e.g. 5%).
+   * If cap > 50, it represents the child publisher's max share (e.g. 95%).
    */
   const rawCap = partnerRecord.max_revenue_share
   const cap =
     typeof rawCap === 'number' && Number.isFinite(rawCap) && rawCap > 0
       ? Math.min(100, Math.round(rawCap))
       : 100
-  if (childShare > cap) {
-    return fail(`Revenue share cannot exceed ${cap}% for this account. Contact the admin.`, 403)
+  const parentShare = 100 - childShare
+  if (cap <= 50) {
+    if (parentShare > cap) {
+      return fail(`Revenue share cannot exceed ${cap}% for this account. Contact the admin.`, 403)
+    }
+  } else {
+    if (childShare > cap) {
+      return fail(`Revenue share cannot exceed ${cap}% for this account. Contact the admin.`, 403)
+    }
   }
 
   const host = hostOf(site)

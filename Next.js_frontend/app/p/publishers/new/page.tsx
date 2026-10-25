@@ -42,6 +42,7 @@ export default function NewPublisherPage() {
           ? Math.min(100, Math.round(data.maxRevenueShare))
           : 100
         setMaxShare(cap)
+        setParentShare((prev) => (typeof prev === 'number' ? Math.min(prev, cap) : cap))
       })
       .catch(() => {})
     return () => {
@@ -56,14 +57,14 @@ export default function NewPublisherPage() {
     return withoutScheme.split('/')[0].split('?')[0].split('#')[0].replace(/^www\./i, '').replace(/\.$/, '').toLowerCase()
   }, [site])
 
-  const shareValid = typeof parentShare === 'number' && !Number.isNaN(parentShare) && parentShare >= 1 && parentShare <= 99
+  const shareValid = typeof parentShare === 'number' && !Number.isNaN(parentShare) && parentShare >= 1 && parentShare <= maxShare
   const fieldsFilled = Boolean(host && gamEmail && networkCode.replace(/\D/g, '') && delegationType && shareValid)
 
   function resetForm() {
     setSite('')
     setGamEmail('')
     setNetworkCode('')
-    setParentShare(DEFAULT_PARENT_SHARE)
+    setParentShare(Math.min(DEFAULT_PARENT_SHARE, maxShare))
     setDelegationType('MANAGE_ACCOUNT')
     setError('')
     setPhase('form')
@@ -76,6 +77,7 @@ export default function NewPublisherPage() {
     setError('')
 
     try {
+      const numParent = typeof parentShare === 'number' ? parentShare : Number(parentShare)
       const res = await fetch('/api/p/publishers/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +85,8 @@ export default function NewPublisherPage() {
           site,
           gamEmail,
           networkCode,
-          childShare: 100 - (typeof parentShare === 'number' ? parentShare : Number(parentShare)),
+          childShare: 100 - numParent,
+          parentShare: numParent,
           delegationType,
         }),
       })
@@ -109,17 +112,18 @@ export default function NewPublisherPage() {
   /* ------------------------------ result cards ------------------------------ */
 
   if (phase === 'blocked') {
+    const isDuplicate = error.toLowerCase().includes('already exists')
     return (
       <>
         <Link className="back-link" href="/p/publishers">← Manage publishers</Link>
         <section className="panel result-card result-card-blocked">
           <AlertCircle className="result-icon" />
-          <h2>Publisher already exists</h2>
+          <h2>{isDuplicate ? 'Publisher already exists' : 'Submission blocked'}</h2>
           <p>{error}</p>
           <div className="form-actions">
             <Link className="secondary-button" href="/p/tickets">Open a support ticket</Link>
             <button className="primary-button" type="button" onClick={() => { resetForm(); router.refresh() }}>
-              Try another publisher
+              {isDuplicate ? 'Try another publisher' : 'Try again'}
             </button>
           </div>
         </section>
@@ -226,7 +230,7 @@ export default function NewPublisherPage() {
                 className="input"
                 type="number"
                 min={1}
-                max={99}
+                max={maxShare}
                 step={1}
                 value={parentShare}
                 onChange={(e) => {
@@ -237,8 +241,8 @@ export default function NewPublisherPage() {
                   }
                   const num = Number(val)
                   if (Number.isNaN(num)) return
-                  if (num > 99) {
-                    setParentShare(99)
+                  if (num > maxShare) {
+                    setParentShare(maxShare)
                   } else {
                     setParentShare(num)
                   }
@@ -246,11 +250,11 @@ export default function NewPublisherPage() {
                 onBlur={() => {
                   if (parentShare === '' || Number(parentShare) < 1) {
                     setParentShare(1)
-                  } else if (Number(parentShare) > 99) {
-                    setParentShare(99)
+                  } else if (Number(parentShare) > maxShare) {
+                    setParentShare(maxShare)
                   }
                 }}
-                placeholder="10"
+                placeholder={String(Math.min(DEFAULT_PARENT_SHARE, maxShare))}
                 required
               />
             </Field>
