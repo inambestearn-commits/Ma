@@ -10,8 +10,8 @@ const DELEGATION_OPTIONS = [
   { value: 'MANAGE_ACCOUNT', label: 'MANAGE_ACCOUNT · Managed by AdGlobeX' },
 ]
 
-/** Used until /api/p/partner answers; the cap then clamps this down. */
-const DEFAULT_CHILD_SHARE = 10
+/** Default parent share in percent (10% parent, 90% child). */
+const DEFAULT_PARENT_SHARE = 10
 
 type Phase = 'form' | 'sending' | 'blocked' | 'done'
 
@@ -21,7 +21,7 @@ export default function NewPublisherPage() {
   const [site, setSite] = useState('')
   const [gamEmail, setGamEmail] = useState('')
   const [networkCode, setNetworkCode] = useState('')
-  const [childShare, setChildShare] = useState<number | ''>(DEFAULT_CHILD_SHARE)
+  const [parentShare, setParentShare] = useState<number | ''>(DEFAULT_PARENT_SHARE)
   const [maxShare, setMaxShare] = useState(100)
   const [delegationType, setDelegationType] = useState('MANAGE_ACCOUNT')
 
@@ -30,9 +30,7 @@ export default function NewPublisherPage() {
 
   /**
    * The ceiling comes from `partners.max_revenue_share`, set by the admin when
-   * this partner was created. Until it lands the share is unbounded, then
-   * clamps — and the current value is pulled back inside the new range so the
-   * form never holds a share the server would reject.
+   * this partner was created.
    */
   useEffect(() => {
     let cancelled = false
@@ -44,7 +42,6 @@ export default function NewPublisherPage() {
           ? Math.min(100, Math.round(data.maxRevenueShare))
           : 100
         setMaxShare(cap)
-        setChildShare((prev) => (typeof prev === 'number' ? Math.min(prev, cap) : cap))
       })
       .catch(() => {})
     return () => {
@@ -59,14 +56,14 @@ export default function NewPublisherPage() {
     return withoutScheme.split('/')[0].split('?')[0].split('#')[0].replace(/^www\./i, '').replace(/\.$/, '').toLowerCase()
   }, [site])
 
-  const shareValid = typeof childShare === 'number' && !Number.isNaN(childShare) && childShare >= 1 && childShare <= maxShare
+  const shareValid = typeof parentShare === 'number' && !Number.isNaN(parentShare) && parentShare >= 1 && parentShare <= 99
   const fieldsFilled = Boolean(host && gamEmail && networkCode.replace(/\D/g, '') && delegationType && shareValid)
 
   function resetForm() {
     setSite('')
     setGamEmail('')
     setNetworkCode('')
-    setChildShare(Math.min(DEFAULT_CHILD_SHARE, maxShare))
+    setParentShare(DEFAULT_PARENT_SHARE)
     setDelegationType('MANAGE_ACCOUNT')
     setError('')
     setPhase('form')
@@ -86,7 +83,7 @@ export default function NewPublisherPage() {
           site,
           gamEmail,
           networkCode,
-          childShare: typeof childShare === 'number' ? childShare : Number(childShare),
+          childShare: 100 - (typeof parentShare === 'number' ? parentShare : Number(parentShare)),
           delegationType,
         }),
       })
@@ -223,34 +220,34 @@ export default function NewPublisherPage() {
 
             <Field
               label="Revenue share"
-              hint={`Enter the child's share. Your account is capped at ${maxShare}%.`}
+              hint={`Parent share. Your account is capped at ${maxShare}%.`}
             >
               <input
                 className="input"
                 type="number"
                 min={1}
-                max={maxShare}
+                max={99}
                 step={1}
-                value={childShare}
+                value={parentShare}
                 onChange={(e) => {
                   const val = e.target.value
                   if (val === '') {
-                    setChildShare('')
+                    setParentShare('')
                     return
                   }
                   const num = Number(val)
                   if (Number.isNaN(num)) return
-                  if (num > maxShare) {
-                    setChildShare(maxShare)
+                  if (num > 99) {
+                    setParentShare(99)
                   } else {
-                    setChildShare(num)
+                    setParentShare(num)
                   }
                 }}
                 onBlur={() => {
-                  if (childShare === '' || Number(childShare) < 1) {
-                    setChildShare(1)
-                  } else if (Number(childShare) > maxShare) {
-                    setChildShare(maxShare)
+                  if (parentShare === '' || Number(parentShare) < 1) {
+                    setParentShare(1)
+                  } else if (Number(parentShare) > 99) {
+                    setParentShare(99)
                   }
                 }}
                 placeholder="10"
