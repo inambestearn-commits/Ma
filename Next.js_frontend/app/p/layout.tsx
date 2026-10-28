@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSessionPartner } from '@/lib/partner'
 import { getPartnerRecord } from '@/lib/bq'
+import { isSubPartnerTag } from '@/lib/sub-partners'
 import { PartnerShell } from '@/components/partner-shell'
 
 export const dynamic = 'force-dynamic'
@@ -34,6 +35,15 @@ export default async function PartnerLayout({ children }: { children: React.Reac
     redirect('/login')
   }
 
+  // Sub-partners manage nobody, so the sub-partner section is not for them.
+  // A failed lookup must not lock anyone out — the section guard re-checks.
+  let isSubPartner = false
+  try {
+    isSubPartner = await isSubPartnerTag(partner.partnerTag)
+  } catch {
+    isSubPartner = false
+  }
+
   return (
     <PartnerShell
       partner={{
@@ -45,6 +55,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
         // cannot change from the portal.
         fullName: partner.fullName || record?.name || null,
       }}
+      isSubPartner={isSubPartner}
     >
       {children}
     </PartnerShell>

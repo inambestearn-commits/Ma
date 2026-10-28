@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { bigQueryError, requirePartner } from '@/lib/api-partner'
 import { getPartnerRecord } from '@/lib/bq'
 import { createMCMChild } from '@/lib/gam'
+import { getSubPartnerByTag } from '@/lib/sub-partners'
 import {
   childShareToParentMillipercent,
   findNetworkCode,
@@ -52,20 +53,26 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) return auth
 
   /**
-   * The GAM child is named `<PARTNER_TICKET>-<host>`, and the dashboard later
-   * reads that ticket back out of the label's leading `TAG-` prefix to scope
-   * every report. So the session tag must be a real partner_ticket —
-   * otherwise the child is created under a ticket nobody can see. Checking
-   * here turns a silent, invisible onboarding into a clear message.
+   * The GAM child is named `<TICKET>-<host>`, and the dashboard later reads
+   * that ticket back out of the label's leading `TAG-` prefix to scope every
+   * report. A parent partner resolves through `partners`; a sub-partner has no
+   * row there and resolves through `sub_partners` instead (its own tag is the
+   * label prefix, which its parent's queries also match). An account that is
+   * neither still gets a clear refusal rather than an invisible onboarding.
    */
   let partnerRecord: Awaited<ReturnType<typeof getPartnerRecord>> = null
+  let subPartner: Awaited<ReturnType<typeof getSubPartnerByTag>> = null
   try {
     partnerRecord = await getPartnerRecord(auth.partnerTag)
+    if (!partnerRecord) subPartner = await getSubPartnerByTag(auth.partnerTag)
   } catch {
     return bigQueryError(new Error('Partner lookup failed'))
   }
-  if (!partnerRecord) {
+  if (!partnerRecord && !subPartner) {
     return fail('Your account is not linked to a partner record. Contact the admin.', 403)
+  }
+  if (subPartner && String(subPartner.status).toUpperCase() !== 'ACTIVE') {
+    return fail('Your account is not active. Contact your partner.', 403)
   }
 
   let body: Record<string, unknown>
@@ -92,34 +99,42 @@ export async function POST(request: NextRequest) {
   if (millipercent === null) return fail('Revenue share must be a whole percent between 1 and 100', 400)
 
   /**
-   * The commercial bound set when this partner was created. Enforced here as
-   * well as in the form, so a stale tab or a hand-rolled request cannot breach
-   * what the partner was actually granted. No cap recorded means no limit.
+   * The floor comes from whoever provisioned the account:
    *
-   * If cap <= 50, it represents the partner's (parent's) minimum cut (e.g. 5%),
-   * meaning the partner must charge at least that percentage.
-   * If cap > 50, it represents the child publisher's max share (e.g. 95%).
+   *   - parent partner: `partners.max_revenue_share` (admin-set). A value ≤ 50
+   *     is the partner's minimum parent cut; > 50 is the child's max share.
+   *   - sub-partner: `sub_partners.revenue_share`, the parent share its own
+   *     partner set when creating it.
    */
-  const rawCap = partnerRecord.max_revenue_share
-  const cap =
-    typeof rawCap === 'number' && Number.isFinite(rawCap) && rawCap > 0
-      ? Math.min(100, Math.round(rawCap))
-      : 100
   const parentShare = 100 - childShare
-  if (cap <= 50) {
-    if (parentShare < cap) {
-      return fail(`Revenue share cannot be less than ${cap}% for this account. Contact the admin.`, 403)
+  if (subPartner) {
+    const floor = Math.min(99, Math.max(1, Math.round(subPartner.revenueShare)))
+    if (parentShare < floor) {
+      return fail(`Revenue share cannot be less than ${floor}% for this account. Contact your partner.`, 403)
     }
   } else {
-    if (childShare > cap) {
-      return fail(`Revenue share cannot exceed ${cap}% for this account. Contact the admin.`, 403)
+    const rawCap = partnerRecord?.max_revenue_share
+    const cap =
+      typeof rawCap === 'number' && Number.isFinite(rawCap) && rawCap > 0
+        ? Math.min(100, Math.round(rawCap))
+        : 100
+    if (cap <= 50) {
+      if (parentShare < cap) {
+        return fail(`Revenue share cannot be less than ${cap}% for this account. Contact the admin.`, 403)
+      }
+    } else {
+      if (childShare > cap) {
+        return fail(`Revenue share cannot exceed ${cap}% for this account. Contact the admin.`, 403)
+      }
     }
   }
 
   const host = hostOf(site)
   if (!host || !host.includes('.')) return fail('Invalid site URL', 400)
 
-  const partnerTicket = String(partnerRecord.partner_ticket).trim()
+  const partnerTicket = partnerRecord
+    ? String(partnerRecord.partner_ticket).trim()
+    : auth.partnerTag
   const childName = childNameFor(host, partnerTicket)
   const requestId = newRequestId()
 

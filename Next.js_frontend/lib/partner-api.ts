@@ -448,3 +448,49 @@ export const usePartnerSubmissions = () =>
     queryKey: partnerSubmissionKeys.list(),
     queryFn: () => getJson<PartnerSubmissionsResponse>('/api/p/publishers/requests'),
   })
+
+/* ------------------------------- Sub-partners ------------------------------ */
+
+export interface SubPartner {
+  subPartnerId: string
+  parentTag: string
+  parentTicket: string
+  subTicket: string
+  subTag: string
+  name: string
+  email: string
+  revenueShare: number
+  status: string
+  authUserId: string | null
+  createdAt: string | null
+}
+
+export interface SubPartnersResponse {
+  subPartners: SubPartner[]
+}
+
+export interface CreateSubPartnerInput {
+  name: string
+  email: string
+  password: string
+  revenueShare: number
+}
+
+export const subPartnerKeys = {
+  list: () => ['partner', 'sub-partners'] as const,
+}
+
+export const useSubPartners = () =>
+  useQuery({
+    queryKey: subPartnerKeys.list(),
+    queryFn: () => getJson<SubPartnersResponse>('/api/p/sub-partners'),
+  })
+
+export const useCreateSubPartner = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateSubPartnerInput) =>
+      postJson<SubPartner>('/api/p/sub-partners', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: subPartnerKeys.list() }),
+  })
+}

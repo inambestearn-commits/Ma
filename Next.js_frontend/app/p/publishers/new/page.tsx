@@ -29,8 +29,9 @@ export default function NewPublisherPage() {
   const [error, setError] = useState('')
 
   /**
-   * The commercial floor comes from `partners.max_revenue_share`, set by the admin when
-   * this partner was created. The partner cannot offer less than their account floor.
+   * The commercial floor is resolved server-side: an admin cap for a parent
+   * partner, or the parent share a sub-partner's own partner set for them.
+   * The partner cannot offer less than their account floor.
    */
   useEffect(() => {
     let cancelled = false
@@ -38,9 +39,9 @@ export default function NewPublisherPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return
-        const raw = data.maxRevenueShare
+        const raw = data.minParentShare
         if (typeof raw === 'number' && raw > 0) {
-          const min = raw > 50 ? Math.max(1, 100 - Math.round(raw)) : Math.round(raw)
+          const min = Math.round(raw)
           setMinShare(min)
           setParentShare((prev) => (typeof prev === 'number' ? Math.max(prev, min) : min))
         }

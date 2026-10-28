@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   Activity, ArrowUpRight, BarChart3, Boxes, LayoutDashboard, LifeBuoy, LogOut, Menu,
-  Settings, Users, X,
+  Settings, Users, Users2, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -18,6 +18,7 @@ interface NavEntry {
 const NAV: NavEntry[] = [
   { label: 'Home', href: '/p', icon: LayoutDashboard },
   { label: 'Publishers', href: '/p/publishers', icon: Users },
+  { label: 'Sub Partners', href: '/p/sub-partners', icon: Users2 },
   { label: 'My Sites', href: '/p/sites', icon: Boxes },
   { label: 'Reporting', href: '/p/reporting', icon: Activity },
   // Hidden for now — `mcm_earnings` is empty, so the page renders nothing worth
@@ -32,6 +33,8 @@ const TITLES: Record<string, string> = {
   '/p/publishers': 'Publishers',
   '/p/publishers/new': 'Add publisher',
   '/p/publishers/requests': 'My requests',
+  '/p/sub-partners': 'Sub partners',
+  '/p/sub-partners/new': 'Create sub partner',
   '/p/sites': 'My Sites',
   '/p/reporting': 'Reporting',
   '/p/payments': 'Payments',
@@ -57,9 +60,11 @@ function isActive(pathname: string, href: string): boolean {
 export function PartnerShell({
   children,
   partner,
+  isSubPartner = false,
 }: {
   children: React.ReactNode
   partner: { tag: string; email: string; fullName: string | null }
+  isSubPartner?: boolean
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -80,6 +85,7 @@ export function PartnerShell({
   }, [])
 
   const displayName = partner.fullName || partner.email.split('@')[0] || partner.tag
+  const nav = isSubPartner ? NAV.filter((entry) => entry.href !== '/p/sub-partners') : NAV
   const initials = displayName
     .split(/[\s.-]+/)
     .map((w) => w[0])
@@ -112,7 +118,7 @@ export function PartnerShell({
         </div>
 
         <nav className="main-nav" aria-label="Partner navigation">
-          {NAV.map((entry) => {
+          {nav.map((entry) => {
             const Icon = entry.icon
             return (
               <div key={entry.href} className="nav-entry">
